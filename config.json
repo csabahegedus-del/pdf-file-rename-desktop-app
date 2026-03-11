@@ -1,0 +1,38 @@
+{
+    "_comment": "User-specific mappings and notes for the PDF rename program.",
+
+    "elmu": {
+        "_comment": "Last 4 digits of ELMU measurement point ID mapped to company name",
+        "measurement_point_company_map": {
+            "9487": "Kumi Futár"
+        }
+    },
+
+    "fovarosi_vizmuvek": {
+        "_comment": "Location keyword in usage address mapped to company name",
+        "address_company_map": {
+            "Szigetszentmiklós": "Delta",
+            "Leshegy": "Delta"
+        }
+    },
+
+    "heves_megyei": {
+        "_comment": "Location keyword in usage address mapped to company name",
+        "address_company_map": {
+            "Kistályai": "Bosch",
+            "Eger": "Bosch"
+        }
+    },
+
+    "dmrv": {
+        "_comment": "Optional extra notes appended to DMRV filenames, keyed by invoice number",
+        "invoice_notes": {
+            "4010779447": "Godollo, viz"
+        }
+    },
+
+    "eon_del": {
+        "_comment": "City associated with E.ON Dél-Dunántúli service location (default: Pécs)",
+        "city": "Pécs"
+    }
+}

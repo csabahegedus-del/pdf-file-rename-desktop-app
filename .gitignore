@@ -1,0 +1,31 @@
+# Generated output folders (populated at runtime)
+output/
+preview/
+log/
+
+# Keep folder stubs tracked
+!output/.gitkeep
+!preview/.gitkeep
+!log/.gitkeep
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
