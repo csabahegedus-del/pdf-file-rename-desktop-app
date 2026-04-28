@@ -126,7 +126,7 @@ class E2HungaryProvider(base.BaseProvider):
 
     def _measurement_point_info(self, all_text: str) -> tuple[str | None, str | None]:
         """Return (last4_digits, company_name) from Mérési pont azonosító."""
-        m = re.search(r"M[eé]r[eé]si\s+pont\s+azonos[ií]t[oó][:\s]+(\S+)", all_text, re.IGNORECASE)
+        m = re.search(r"M[eé]r[eé]si\s*pont\s*azonos[ií]t[oó][:\s]+(\S+)", all_text, re.IGNORECASE)
         if not m:
             return None, None
         mpid = m.group(1).strip()
