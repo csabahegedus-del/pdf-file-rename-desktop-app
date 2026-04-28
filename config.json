@@ -4,13 +4,38 @@
     "elmu": {
         "_comment": "Last 4 digits of ELMU measurement point ID mapped to company name",
         "measurement_point_company_map": {
-            "9487": "Kumi Futár"
+            "3231": "thenordicmark",
+            "8881": "GST",
+            "3214": "BBL",
+            "3225": "Best Marine",
+            "8882": "GST",
+            "8878": "GST",
+            "2976": "Gödöllő",
+            "9487": "Kumi Futár",
+            "8880": "Rhenus",
+            "7516": "GST",
+            "8879": "EFC",
+            "9415": "közös porta",
+            "7871": "Dunaharaszti"
         }
     },
 
     "e2": {
         "_comment": "Last 4 digits of E2 electricity measurement point ID mapped to company name",
         "measurement_point_company_map": {
+            "3231": "thenordicmark",
+            "8881": "GST",
+            "3214": "BBL",
+            "3225": "Best Marine",
+            "8882": "GST",
+            "8878": "GST",
+            "2976": "Gödöllő",
+            "9487": "Kumi Futár",
+            "8880": "Rhenus",
+            "7516": "GST",
+            "8879": "EFC",
+            "9415": "közös porta",
+            "7871": "Dunaharaszti"
         }
     },
 

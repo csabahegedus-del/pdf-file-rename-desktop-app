@@ -2,7 +2,7 @@
 tettye.py – parser for TETTYE FORRÁSHÁZ Zrt. (water utility) bills.
 
 Expected output format:
-    Tettye_<invoice> (<period>) reszszamla [viz].pdf
+    Tettye_<invoice> (<period>) részszámla [viz].pdf
 """
 import re
 import logging
@@ -52,13 +52,13 @@ class TettyeProvider(base.BaseProvider):
         return self._period(pages)
 
     def _bill_type(self, first_page: str) -> str:
-        # Tettye uses "N. részszámla" in first line; we show "reszszamla"
-        return "reszszamla"
+        # Tettye uses "N. részszámla" in first line; we show "részszámla"
+        return "részszámla"
 
     def generate_filename(self, parsed: dict, ext: str = ".pdf") -> str:
         invoice = parsed.get("invoice", "ISMERETLEN")
         period = parsed.get("period", "")
-        bill_type = parsed.get("bill_type", "reszszamla")
+        bill_type = parsed.get("bill_type", "részszámla")
 
         period_part = f" ({period})" if period else ""
 

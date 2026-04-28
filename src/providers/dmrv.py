@@ -7,7 +7,7 @@ Expected output format:
 Types:
     részszámla   → részN  (N = ordinal from "N. részszámla")
     jóváíró      → jóváíró
-    elszámoló    → elszamolo
+    elszámoló    → elszámoló
 """
 import re
 import logging
@@ -65,7 +65,7 @@ class DMRVProvider(base.BaseProvider):
             return "jóváíró"
 
         if re.search(r"elsz[aá]mol[oó]", first_page[:300], re.IGNORECASE):
-            return "elszamolo"
+            return "elszámoló"
 
         if re.search(r"r[eé]szsz[aá]mla", first_page[:300], re.IGNORECASE):
             return "rész"

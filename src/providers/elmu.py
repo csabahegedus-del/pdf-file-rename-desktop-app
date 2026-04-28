@@ -8,8 +8,8 @@ The last 4 digits of the "Mérési pont azonosító" field are used to look up
 a company name via the mapping in config.json.
 
 Types:
-    elszámoló számla → elszamolo
-    részszámla       → reszszamla[N]   (N = ordinal if present)
+    elszámoló számla → elszámoló
+    részszámla       → részszámla[N]   (N = ordinal if present)
 """
 import re
 import logging
@@ -49,12 +49,12 @@ class ELMUProvider(base.BaseProvider):
         # Check for numbered installment: "3. részszámla"
         m = re.search(r"(\d+)\.\s*r[eé]szsz[aá]mla", first_line, re.IGNORECASE)
         if m:
-            return f"reszszamla{m.group(1)}"
+            return f"részszámla{m.group(1)}"
 
         if re.search(r"elsz[aá]mol[oó]", first_line, re.IGNORECASE):
-            return "elszamolo"
+            return "elszámoló"
         if re.search(r"r[eé]szsz[aá]mla", first_line, re.IGNORECASE):
-            return "reszszamla"
+            return "részszámla"
         return "számla"
 
     def _measurement_point_info(self, all_text: str) -> tuple[str | None, str | None]:

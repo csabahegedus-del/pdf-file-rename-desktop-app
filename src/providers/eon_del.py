@@ -5,7 +5,7 @@ Expected output format:
     E.ON Dél-Dunántúli (<city>)_<invoice> (<period>) <type>.pdf
 
 Types:
-    elszámoló számla → elszamolo
+    elszámoló számla → elszámoló
     részszámla       → rész
 """
 import re
@@ -44,7 +44,7 @@ class EONDelProvider(base.BaseProvider):
     def _bill_type(self, first_page: str) -> str:
         first_line = first_page.strip().splitlines()[0] if first_page.strip() else ""
         if re.search(r"elsz[aá]mol[oó]", first_line, re.IGNORECASE):
-            return "elszamolo"
+            return "elszámoló"
         if re.search(r"r[eé]szsz[aá]mla", first_line, re.IGNORECASE):
             return "rész"
         return "számla"

@@ -17,9 +17,9 @@ Gas types:
     Gáz elszámoló számla  → elszámoló
 
 Electricity types:
-    N. Áram részszámla    → reszszamlaN
-    Áram részszámla       → reszszamla
-    Áram elszámoló számla → elszamolo
+    N. Áram részszámla    → részszámlaN
+    Áram részszámla       → részszámla
+    Áram elszámoló számla → elszámoló
 """
 import re
 import logging
@@ -116,12 +116,12 @@ class E2HungaryProvider(base.BaseProvider):
         # Check for numbered installment: "3. Áram részszámla"
         m = re.search(r"(\d+)\.\s*[Áá]ram\s+r[eé]szsz[aá]mla", first_page, re.IGNORECASE)
         if m:
-            return f"reszszamla{m.group(1)}"
+            return f"részszámla{m.group(1)}"
 
         if re.search(r"[Áá]ram\s+r[eé]szsz[aá]mla", first_page, re.IGNORECASE):
-            return "reszszamla"
+            return "részszámla"
         if re.search(r"elsz[aá]mol[oó]", first_page, re.IGNORECASE):
-            return "elszamolo"
+            return "elszámoló"
         return "számla"
 
     def _measurement_point_info(self, all_text: str) -> tuple[str | None, str | None]:
