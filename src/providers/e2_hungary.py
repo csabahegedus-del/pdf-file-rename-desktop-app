@@ -105,7 +105,7 @@ class E2HungaryProvider(base.BaseProvider):
 
     def _utility_type(self, first_page: str) -> str:
         """Return 'áram' for electricity bills, 'gáz' for gas bills."""
-        if re.search(r"Villamosenergia|[Áá]ram\s+r[eé]szsz[aá]mla|[Áá]ram\s+elsz[aá]mol", first_page, re.IGNORECASE):
+        if re.search(r"Villamosenergia|[Áá]ram\s+r[eé]szsz[aá]mla|[Áá]ram\s+elsz[aá]mol|[Áá]ram\s+havi\s+sz[aá]mla", first_page, re.IGNORECASE):
             return "áram"
         return "gáz"
 
