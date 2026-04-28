@@ -1,23 +1,30 @@
 """
-e2_hungary.py – parser for E2 Hungary Zrt. (gas) bills.
+e2_hungary.py – parser for E2 Hungary Zrt. (gas and electricity) bills.
 
 E2 PDFs use a non-standard font encoding that produces garbled text.
 The pdf_reader normalisation step resolves most (cid:NNN) codes, but
 some characters (Æ→á, Ø→é, œ→ú, ı→i) may still appear.
 
 Expected output format:
-    E2_<invoice> (<period>) gáz <type>.pdf
+    Gas:         E2_<invoice> (<period>) gáz <type>.pdf
+    Electricity: E2_<invoice> (<period>) áram <type> (<last4>) <company>.pdf
 
   period is YYYY.MM (month only) – taken from page 2 "YYYY.MM.havi" billing
   row or from meter start/end dates.
 
-Types:
+Gas types:
     Teljesítménydíjszámla → kapacitás
     Gáz elszámoló számla  → elszámoló
+
+Electricity types:
+    N. Áram részszámla    → reszszamlaN
+    Áram részszámla       → reszszamla
+    Áram elszámoló számla → elszamolo
 """
 import re
 import logging
 from . import base
+from .. import config
 
 logger = logging.getLogger("pdf_rename")
 
@@ -35,12 +42,22 @@ class E2HungaryProvider(base.BaseProvider):
 
         invoice = self._invoice_e2(pages)
         period = self._period_e2(pages)
-        bill_type = self._bill_type(first)
+        utility = self._utility_type(first)
+
+        if utility == "áram":
+            bill_type = self._bill_type_electricity(first)
+            last4, company = self._measurement_point_info(all_text)
+        else:
+            bill_type = self._bill_type(first)
+            last4, company = None, None
 
         return {
             "invoice": invoice,
             "period": period,
+            "utility": utility,
             "bill_type": bill_type,
+            "last4": last4,
+            "company": company,
         }
 
     def _invoice_e2(self, pages: list[str]) -> str | None:
@@ -86,6 +103,40 @@ class E2HungaryProvider(base.BaseProvider):
             return f"{m.group(1)}.{m.group(2)}"
         return None
 
+    def _utility_type(self, first_page: str) -> str:
+        """Return 'áram' for electricity bills, 'gáz' for gas bills."""
+        if re.search(r"Villamosenergia|[Áá]ram\s+r[eé]szsz[aá]mla|[Áá]ram\s+elsz[aá]mol", first_page, re.IGNORECASE):
+            return "áram"
+        return "gáz"
+
+    def _bill_type_electricity(self, first_page: str) -> str:
+        """Classify E2 electricity bill type from the first page."""
+        first_line = first_page.strip().splitlines()[0] if first_page.strip() else ""
+
+        # Check for numbered installment: "3. Áram részszámla"
+        m = re.search(r"(\d+)\.\s*[Áá]ram\s+r[eé]szsz[aá]mla", first_page, re.IGNORECASE)
+        if m:
+            return f"reszszamla{m.group(1)}"
+
+        if re.search(r"[Áá]ram\s+r[eé]szsz[aá]mla", first_page, re.IGNORECASE):
+            return "reszszamla"
+        if re.search(r"elsz[aá]mol[oó]", first_page, re.IGNORECASE):
+            return "elszamolo"
+        return "számla"
+
+    def _measurement_point_info(self, all_text: str) -> tuple[str | None, str | None]:
+        """Return (last4_digits, company_name) from Mérési pont azonosító."""
+        m = re.search(r"M[eé]r[eé]si\s+pont\s+azonos[ií]t[oó][:\s]+(\S+)", all_text, re.IGNORECASE)
+        if not m:
+            return None, None
+        mpid = m.group(1).strip()
+        digits_only = re.sub(r"\D", "", mpid)
+        last4 = digits_only[-4:] if len(digits_only) >= 4 else digits_only
+
+        mapping = config.get("e2", "measurement_point_company_map") or {}
+        company = mapping.get(last4)
+        return last4, company
+
     def _bill_type(self, first_page: str) -> str:
         if re.search(r"Teljes[ií]tm[eé]nyd[ií]jszámla", first_page, re.IGNORECASE):
             return "kapacitás"
@@ -99,7 +150,14 @@ class E2HungaryProvider(base.BaseProvider):
         invoice = parsed.get("invoice", "ISMERETLEN")
         period = parsed.get("period", "")
         bill_type = parsed.get("bill_type", "")
+        utility = parsed.get("utility", "gáz")
+        last4 = parsed.get("last4")
+        company = parsed.get("company")
 
         period_part = f" ({period})" if period else ""
+
+        if utility == "áram":
+            company_part = f" ({last4}) {company}" if last4 and company else (f" ({last4})" if last4 else "")
+            return f"E2_{invoice}{period_part} áram {bill_type}{company_part}{ext.lower()}"
 
         return f"E2_{invoice}{period_part} gáz {bill_type}{ext.lower()}"

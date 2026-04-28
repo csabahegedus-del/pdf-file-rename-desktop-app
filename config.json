@@ -8,6 +8,12 @@
         }
     },
 
+    "e2": {
+        "_comment": "Last 4 digits of E2 electricity measurement point ID mapped to company name",
+        "measurement_point_company_map": {
+        }
+    },
+
     "fovarosi_vizmuvek": {
         "_comment": "Location keyword in usage address mapped to company name",
         "address_company_map": {
