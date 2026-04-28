@@ -133,7 +133,7 @@ class E2HungaryProvider(base.BaseProvider):
         digits_only = re.sub(r"\D", "", mpid)
         last4 = digits_only[-4:] if len(digits_only) >= 4 else digits_only
 
-        mapping = config.get("e2", "measurement_point_company_map") or {}
+        mapping = config.get("elmu", "measurement_point_company_map") or {}
         company = mapping.get(last4)
         return last4, company
 
