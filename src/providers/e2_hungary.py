@@ -125,16 +125,28 @@ class E2HungaryProvider(base.BaseProvider):
         return "számla"
 
     def _measurement_point_info(self, all_text: str) -> tuple[str | None, str | None]:
-        """Return (last4_digits, company_name) from Mérési pont azonosító."""
+        """Return (last4, company_name) from Mérési pont azonosító.
+
+        First tries the last 4 digits of the ID; if no mapping is found,
+        falls back to the last 4 raw characters of the full ID (e.g. "S---").
+        """
         m = re.search(r"M[eé]r[eé]si\s*pont\s*azonos[ií]t[oó][:\s]+(\S+)", all_text, re.IGNORECASE)
         if not m:
             return None, None
         mpid = m.group(1).strip()
+
+        mapping = config.get("e2", "measurement_point_company_map") or {}
+
+        # Primary: last 4 digits
         digits_only = re.sub(r"\D", "", mpid)
         last4 = digits_only[-4:] if len(digits_only) >= 4 else digits_only
-
-        mapping = config.get("elmu", "measurement_point_company_map") or {}
         company = mapping.get(last4)
+
+        # Fallback: last 4 raw characters
+        if company is None and len(mpid) >= 4:
+            last4 = mpid[-4:]
+            company = mapping.get(last4)
+
         return last4, company
 
     def _bill_type(self, first_page: str) -> str:
