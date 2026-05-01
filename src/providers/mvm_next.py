@@ -17,6 +17,14 @@ from . import base
 
 logger = logging.getLogger("pdf_rename")
 
+# Mapping: building letter → company name (fixed, per business requirement)
+_BUILDING_COMPANY: dict[str, str] = {
+    "C": "Schuller",
+    "E": "Schuller",
+    "F": "ODBE",
+    "G": "ODBE",
+    "H": "ODBE",
+}
 
 def _prev_month(year: int, month: int) -> tuple[int, int]:
     """Return (year, month) of the month before (year, month)."""
@@ -83,10 +91,15 @@ class MVMNextProvider(base.BaseProvider):
         return "számla"
 
     def _building(self, all_text: str) -> str:
-        """Extract building identifier from usage location, e.g. 'H ép.' → 'H épület'."""
+        """Extract building identifier from usage location, e.g. 'H ép.' → 'H épület (ODBE)'."""
         m = re.search(r"\b([A-Z])\s+[eé]p\.", all_text)
         if m:
-            return f"{m.group(1)} épület"
+            letter = m.group(1)
+            base_name = f"{letter} épület"
+            company = _BUILDING_COMPANY.get(letter)
+            if company:
+                return f"{base_name} ({company})"
+            return base_name
         return ""
 
     def _ho_label(self, all_text: str) -> str | None:

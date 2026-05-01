@@ -62,4 +62,4 @@ class TettyeProvider(base.BaseProvider):
 
         period_part = f" ({period})" if period else ""
 
-        return f"Tettye_{invoice}{period_part} {bill_type} [viz]{ext.lower()}"
+        return f"Tettye_{invoice}{period_part} {bill_type} (Pécs, víz){ext.lower()}"

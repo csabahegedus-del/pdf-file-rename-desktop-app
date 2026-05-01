@@ -6,6 +6,7 @@ from .eon_del import EONDelProvider
 from .elmu import ELMUProvider
 from .e2_hungary import E2HungaryProvider
 from .mvm_next import MVMNextProvider
+from .mvm_emasz import MVMEmaszProvider
 from .edv import EDVProvider
 from .fovarosi_vizmuvek import FovarosiVizmuvekProvider
 from .heves_megyei import HevesMegyeiProvider
@@ -17,6 +18,7 @@ _PROVIDERS: list[BaseProvider] = [
     ELMUProvider(),          # must come before EONDelProvider (both say "E.ON" in some text)
     EONDelProvider(),
     E2HungaryProvider(),
+    MVMEmaszProvider(),      # must come before MVMNextProvider (both contain "MVM" in text)
     MVMNextProvider(),
     DMRVProvider(),
     EDVProvider(),
