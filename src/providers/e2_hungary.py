@@ -169,7 +169,10 @@ class E2HungaryProvider(base.BaseProvider):
         period_part = f" ({period})" if period else ""
 
         if utility == "áram":
-            company_part = f" ({last4}) {company}" if last4 and company else (f" ({last4})" if last4 else "")
+            location_map = config.get("e2", "measurement_point_location_map") or {}
+            location = location_map.get(last4) if last4 else None
+            location_part = f" ({location})" if location else ""
+            company_part = f" ({last4}) {company}{location_part}" if last4 and company else (f" ({last4}){location_part}" if last4 else "")
             return f"E2_{invoice}{period_part} áram {bill_type}{company_part}{ext.lower()}"
 
         return f"E2_{invoice}{period_part} gáz {bill_type}{ext.lower()}"

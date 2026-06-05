@@ -3,6 +3,12 @@
 
     "elmu": {
         "_comment": "Last 4 chars of ELMU measurement point ID mapped to company name (digits-only last4 tried first, then raw last4 chars as fallback)",
+        "measurement_point_location_map": {
+            "7516": "A1 nagy csarnok",
+            "8878": "A1 kis csarnok",
+            "8881": "B5 csarnok",
+            "8882": "B1 csarnok"
+        },
         "measurement_point_company_map": {
             "3231": "thenordicmark",
             "8881": "GST",
@@ -24,6 +30,12 @@
 
     "e2": {
         "_comment": "Last 4 chars of E2 electricity measurement point ID mapped to company name (digits-only last4 tried first, then raw last4 chars as fallback)",
+        "measurement_point_location_map": {
+            "7516": "A1 nagy csarnok",
+            "8878": "A1 kis csarnok",
+            "8881": "B5 csarnok",
+            "8882": "B1 csarnok"
+        },
         "measurement_point_company_map": {
             "3231": "thenordicmark",
             "8881": "GST",
@@ -54,8 +66,8 @@
     "heves_megyei": {
         "_comment": "Location keyword in usage address mapped to company name",
         "address_company_map": {
-            "Kistályai": "Bosch",
-            "Eger": "Bosch"
+            "Kistályai": "Eger",
+            "Eger": "Eger"
         }
     },
 

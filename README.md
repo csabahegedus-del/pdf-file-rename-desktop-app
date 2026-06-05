@@ -94,6 +94,6 @@ A `config.json` fájlban testre szabható:
 | DMRV | `DMRV_4010718333 (2025.03.16-2025.04.15) rész4.pdf` |
 | ÉDV | `EDV_3016624394 (2026.01.06-2026.02.06) Dunaharaszti, viz.pdf` |
 | Fővárosi Vízművek | `Fovarosi Vizmuvek_104000804901 (2026.01.06-2026.02.05) 4.rész Delta, viz.pdf` |
-| Heves Megyei Vízmű | `Heves Megyei Vizmu_2026-00-10019011 (2026.01.11 - 2026.02.10) Bosch (2026.01.havi).pdf` |
-| TETTYE | `Tettye_8364VK26 (2026.05.01-2026.06.30) reszszamla [viz].pdf` |
+| Heves Megyei Vízmű | `Heves Megyei Vizmu_2026-00-10019011 (2026.01.11 - 2026.02.10) Eger (2026.01.havi).pdf` |
+| TETTYE | `Tettye_8364VK26 (2026.05.01-2026.06.30) reszszamla, Pécs, víz.pdf` |
 
