@@ -71,6 +71,22 @@
         }
     },
 
+    "nyirsegviz": {
+        "_comment": "Location keyword in usage address mapped to company name",
+        "address_company_map": {
+            "Lego park": "Lego park",
+            "Lego": "Lego park"
+        }
+    },
+
+    "opus_titasz": {
+        "_comment": "Location keyword in usage address mapped to company name",
+        "address_company_map": {
+            "Lego park": "Lego park",
+            "Lego": "Lego park"
+        }
+    },
+
     "dmrv": {
         "_comment": "Optional extra notes appended to DMRV filenames, keyed by invoice number",
         "invoice_notes": {
