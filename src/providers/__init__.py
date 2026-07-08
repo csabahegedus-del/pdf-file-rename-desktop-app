@@ -11,6 +11,8 @@ from .edv import EDVProvider
 from .fovarosi_vizmuvek import FovarosiVizmuvekProvider
 from .heves_megyei import HevesMegyeiProvider
 from .tettye import TettyeProvider
+from .nyirsegviz import NyirsegvizProvider
+from .opus_titasz import OpusTitaszProvider
 from .base import BaseProvider
 
 # Order matters: put more-specific providers before generic fallbacks.
@@ -25,6 +27,8 @@ _PROVIDERS: list[BaseProvider] = [
     FovarosiVizmuvekProvider(),
     HevesMegyeiProvider(),
     TettyeProvider(),
+    NyirsegvizProvider(),
+    OpusTitaszProvider(),
 ]
 
 
