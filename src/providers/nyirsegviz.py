@@ -55,7 +55,8 @@ class NyirsegvizProvider(base.BaseProvider):
         for keyword, company in mapping.items():
             if keyword.lower() in lower_text:
                 return company
-        return None
+        fallback_company = config.get("nyirsegviz", "default_company")
+        return fallback_company or None
 
     def generate_filename(self, parsed: dict, ext: str = ".pdf") -> str:
         invoice = parsed.get("invoice") or "ISMERETLEN"
