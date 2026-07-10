@@ -70,4 +70,4 @@ class OpusTitaszProvider(base.BaseProvider):
         period_part = f" ({period})" if period else ""
         company_part = f", {company}" if company else ""
 
-        return f"Opus Titasz_{invoice}{period_part} áram rendszerhasználat{company_part}{ext.lower()}"
+        return f"Opus Titász_{invoice}{period_part} áram rendszerhasználat{company_part}{ext.lower()}"
