@@ -76,7 +76,8 @@
         "address_company_map": {
             "Lego park": "Lego park",
             "Lego": "Lego park"
-        }
+        },
+        "default_company": "Lego park"
     },
 
     "opus_titasz": {
@@ -84,7 +85,8 @@
         "address_company_map": {
             "Lego park": "Lego park",
             "Lego": "Lego park"
-        }
+        },
+        "default_company": "Lego park"
     },
 
     "dmrv": {
