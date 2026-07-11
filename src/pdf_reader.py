@@ -1,5 +1,5 @@
 """
-pdf_reader.py – extracts text from every page of a PDF file using pdfplumber.
+pdf_reader.py – extracts text from every page of a PDF file using pdfminer.
 
 E2 Hungary bills contain (cid:NNN) ligature escape sequences and garbled
 Hungarian characters because of their unusual font encoding.  This module
@@ -15,7 +15,8 @@ import re
 import logging
 from pathlib import Path
 
-import pdfplumber
+from pdfminer.high_level import extract_pages
+from pdfminer.layout import LTTextContainer
 
 logger = logging.getLogger("pdf_rename")
 
@@ -167,7 +168,7 @@ def _extract_annotations(path: Path) -> str:
     """
     extra: list[str] = []
     try:
-        # pdfminer is a pdfplumber dependency so it is always available.
+        # pdfminer is a direct dependency so it is always available.
         from pdfminer.pdfdocument import PDFDocument  # type: ignore
         from pdfminer.pdfparser import PDFParser  # type: ignore
         from pdfminer.pdftypes import resolve1  # type: ignore
@@ -243,21 +244,29 @@ def _extract_annotations(path: Path) -> str:
 class PDFReader:
     """Read and normalise text from each page of a PDF."""
 
-    # No provider uses more than 3 pages; cap at 5 to handle edge cases while
-    # avoiding slow full-reads of large multi-page PDFs (e.g. Opus Titász).
-    MAX_PAGES = 5
+    # No provider uses more than 3 pages (the maximum is pages[:3] for
+    # Nyírségvíz and Opus Titász); read only what is needed.
+    MAX_PAGES = 3
 
     def __init__(self, path: Path):
         self.path = path
 
     def extract_text(self) -> list[str]:
-        """Return a list of normalised page texts (one entry per page)."""
+        """Return a list of normalised page texts (one entry per page).
+
+        Uses pdfminer directly instead of pdfplumber: pdfplumber builds
+        a full character-level spatial model (bounding boxes, table edges,
+        word objects) for every page which is much slower than plain text
+        extraction and is unnecessary here.
+        """
         pages: list[str] = []
         try:
-            with pdfplumber.open(self.path) as pdf:
-                for page in pdf.pages[:self.MAX_PAGES]:
-                    raw = page.extract_text() or ""
-                    pages.append(normalise(raw))
+            for page_layout in extract_pages(str(self.path), maxpages=self.MAX_PAGES):
+                text_parts: list[str] = []
+                for element in page_layout:
+                    if isinstance(element, LTTextContainer):
+                        text_parts.append(element.get_text())
+                pages.append(normalise("".join(text_parts)))
         except Exception as exc:
             logger.error("Failed to read %s: %s", self.path.name, exc)
 
