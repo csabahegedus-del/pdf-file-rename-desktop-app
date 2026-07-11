@@ -259,11 +259,15 @@ class PDFReader:
 
         # Append digital-signature / XML-attachment data to the first page so
         # that providers can detect and parse image-based PDFs (e.g. MVM Émász).
-        annotation_text = _extract_annotations(self.path)
-        if annotation_text:
-            if pages:
-                pages[0] = pages[0] + "\n" + annotation_text if pages[0] else annotation_text
-            else:
-                pages.append(annotation_text)
+        # Skip this expensive step for text-based PDFs: if substantial text was
+        # already extracted, there is no need to open the file a second time.
+        total_text_len = sum(len(p) for p in pages)
+        if total_text_len < 200:
+            annotation_text = _extract_annotations(self.path)
+            if annotation_text:
+                if pages:
+                    pages[0] = pages[0] + "\n" + annotation_text if pages[0] else annotation_text
+                else:
+                    pages.append(annotation_text)
 
         return pages
