@@ -4,6 +4,12 @@ pdf_reader.py – extracts text from every page of a PDF file using pdfplumber.
 E2 Hungary bills contain (cid:NNN) ligature escape sequences and garbled
 Hungarian characters because of their unusual font encoding.  This module
 normalises those sequences so that provider parsers can match clean text.
+
+Some providers (e.g. MVM Émász) issue image-based PDFs whose invoice content
+is not extractable as text.  These PDFs may embed the provider name in a
+digital signature field and include the structured invoice data as an XML file
+attachment.  This module also extracts those sources and appends them to the
+first page text so that provider parsers can work without changes.
 """
 import re
 import logging
@@ -93,6 +99,95 @@ def normalise(text: str) -> str:
     return "\n".join(lines)
 
 
+def _extract_annotations(path: Path) -> str:
+    """
+    Extract digital-signature signer names and XML file-attachment content
+    from PDF AcroForm fields and page annotations.
+
+    MVM Émász invoices are image-based PDFs whose page text contains only the
+    recipient address.  The provider name appears in the digital signature's
+    /Name field and all structured invoice data (invoice number, period, …) is
+    stored in an ISO-8859-2 encoded XML file attached to the PDF.
+
+    Returns a single string that is appended to the first page so that normal
+    provider detect/parse methods can match on it.
+    """
+    extra: list[str] = []
+    try:
+        # pdfminer is a pdfplumber dependency so it is always available.
+        from pdfminer.pdfdocument import PDFDocument  # type: ignore
+        from pdfminer.pdfparser import PDFParser  # type: ignore
+        from pdfminer.pdftypes import resolve1  # type: ignore
+
+        # Keep file open for the entire duration of object resolution.
+        with open(path, "rb") as f:
+            parser = PDFParser(f)
+            doc = PDFDocument(parser)
+            catalog = resolve1(doc.catalog)
+
+            # --- Digital-signature signer names from AcroForm fields ---
+            acroform = catalog.get("AcroForm")
+            if acroform is not None:
+                acroform = resolve1(acroform)
+                fields_ref = acroform.get("Fields")
+                if fields_ref is not None:
+                    for field_ref in resolve1(fields_ref):
+                        field = resolve1(field_ref)
+                        ft = str(field.get("FT", ""))
+                        if ft == "/'Sig'":
+                            v_ref = field.get("V")
+                            if v_ref is not None:
+                                sig = resolve1(v_ref)
+                                if hasattr(sig, "get"):
+                                    name_val = sig.get(b"Name") or sig.get("Name")
+                                    if name_val:
+                                        if isinstance(name_val, bytes):
+                                            name_val = name_val.decode("latin-1")
+                                        extra.append(f"[Aláíró] {name_val}")
+
+            # --- XML file attachments from page annotations ---
+            pages_obj = resolve1(catalog.get("Pages", {}))
+            kids = pages_obj.get("Kids", [])
+            if kids:
+                for kid_ref in resolve1(kids):
+                    kid = resolve1(kid_ref)
+                    annots_ref = kid.get("Annots")
+                    if annots_ref is None:
+                        continue
+                    for ann_ref in resolve1(annots_ref):
+                        ann = resolve1(ann_ref)
+                        if str(ann.get("Subtype", "")) != "/'FileAttachment'":
+                            continue
+                        contents = ann.get("Contents", b"")
+                        fname = (
+                            contents.decode("utf-8", errors="replace")
+                            if isinstance(contents, bytes)
+                            else str(contents)
+                        )
+                        if not fname.lower().endswith(".xml"):
+                            continue
+                        fs = ann.get("FS")
+                        if fs is None:
+                            continue
+                        fs = resolve1(fs)
+                        ef = fs.get("EF")
+                        if ef is None:
+                            continue
+                        ef = resolve1(ef) if hasattr(ef, "resolve") else ef
+                        f_ref = ef.get("F") or ef.get("UF") if ef else None
+                        if f_ref is None:
+                            continue
+                        stream = resolve1(f_ref)
+                        xml_bytes = stream.get_data()
+                        xml_text = xml_bytes.decode("iso-8859-2", errors="replace")
+                        extra.append(f"[XML:{fname}]\n{xml_text}")
+
+    except Exception as exc:
+        logger.debug("Could not extract annotation data from %s: %s", path.name, exc)
+
+    return "\n".join(extra)
+
+
 class PDFReader:
     """Read and normalise text from each page of a PDF."""
 
@@ -109,4 +204,14 @@ class PDFReader:
                     pages.append(normalise(raw))
         except Exception as exc:
             logger.error("Failed to read %s: %s", self.path.name, exc)
+
+        # Append digital-signature / XML-attachment data to the first page so
+        # that providers can detect and parse image-based PDFs (e.g. MVM Émász).
+        annotation_text = _extract_annotations(self.path)
+        if annotation_text:
+            if pages:
+                pages[0] = pages[0] + "\n" + annotation_text if pages[0] else annotation_text
+            else:
+                pages.append(annotation_text)
+
         return pages

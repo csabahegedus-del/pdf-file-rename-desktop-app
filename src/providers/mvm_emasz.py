@@ -7,6 +7,11 @@ Expected output format:
 where:
   invoice  = "Számla sorszáma" value (e.g. 752503136176)
   YYYY.MM  = year and month extracted from "Elszámolási időszak" start date
+
+MVM Émász invoices are image-based PDFs.  The provider name appears in the
+digital signature field (injected as "[Aláíró] MVM Émász …" by pdf_reader)
+and the structured invoice data is in an embedded XML attachment
+(injected as "[XML:…]" by pdf_reader).
 """
 import re
 import logging
@@ -20,18 +25,51 @@ class MVMEmaszProvider(base.BaseProvider):
 
     def detect(self, pages: list[str]) -> bool:
         first = pages[0] if pages else ""
+        # Primary: match the digital-signature signer name injected by pdf_reader
+        if re.search(r"\[Aláíró\].*MVM\s+[EÉ]m[aá]sz", first, re.IGNORECASE):
+            return True
+        # Fallback: match plain text in text-based PDFs
         return bool(re.search(r"MVM\s+[EÉ]m[aá]sz\s+[AÁ]ramh[aá]l[oó]zati", first, re.IGNORECASE))
 
     def parse(self, pages: list[str]) -> dict:
         all_text = "\n".join(pages)
 
-        invoice = self._invoice_emasz(all_text)
-        period_ym = self._period_ym(all_text)
+        # Try XML-based extraction first (image-based PDFs with embedded XML)
+        invoice = self._invoice_from_xml(all_text) or self._invoice_emasz(all_text)
+        period_ym = self._period_ym_from_xml(all_text) or self._period_ym(all_text)
 
         return {
             "invoice": invoice,
             "period_ym": period_ym,
         }
+
+    # ------------------------------------------------------------------
+    # XML-based helpers (image-based PDFs)
+    # ------------------------------------------------------------------
+
+    def _invoice_from_xml(self, text: str) -> str | None:
+        """Extract invoice number from embedded XML (<sorszam> or szafaz attribute)."""
+        m = re.search(r"<sorszam>(\d+)</sorszam>", text)
+        if m:
+            return m.group(1)
+        m = re.search(r'szafaz="(\d+)"', text)
+        if m:
+            return m.group(1)
+        return None
+
+    def _period_ym_from_xml(self, text: str) -> str | None:
+        """
+        Extract YYYY.MM from the first <tol> element in embedded XML.
+        E.g. <tol>2026.01.01-2026.01.31</tol>  →  '2026.01'
+        """
+        m = re.search(r"<tol>(\d{4})\.(\d{2})\.\d{2}", text)
+        if m:
+            return f"{m.group(1)}.{m.group(2)}"
+        return None
+
+    # ------------------------------------------------------------------
+    # Text-based helpers (text-based PDF fallback)
+    # ------------------------------------------------------------------
 
     def _invoice_emasz(self, text: str) -> str | None:
         """Extract invoice number from 'Számla sorszáma: 752503136176'."""
