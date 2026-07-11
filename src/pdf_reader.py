@@ -262,11 +262,11 @@ class PDFReader:
         pages: list[str] = []
         try:
             for page_layout in extract_pages(str(self.path), maxpages=self.MAX_PAGES):
-                text_parts: list[str] = []
-                for element in page_layout:
-                    if isinstance(element, LTTextContainer):
-                        text_parts.append(element.get_text())
-                pages.append(normalise("".join(text_parts)))
+                pages.append(normalise("".join(
+                    element.get_text()
+                    for element in page_layout
+                    if isinstance(element, LTTextContainer)
+                )))
         except Exception as exc:
             logger.error("Failed to read %s: %s", self.path.name, exc)
 
