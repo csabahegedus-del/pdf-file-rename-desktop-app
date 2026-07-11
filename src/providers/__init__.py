@@ -1,0 +1,40 @@
+"""
+providers/__init__.py – provider registry and auto-detection.
+"""
+from .dmrv import DMRVProvider
+from .eon_del import EONDelProvider
+from .elmu import ELMUProvider
+from .e2_hungary import E2HungaryProvider
+from .mvm_next import MVMNextProvider
+from .mvm_emasz import MVMEmaszProvider
+from .edv import EDVProvider
+from .fovarosi_vizmuvek import FovarosiVizmuvekProvider
+from .heves_megyei import HevesMegyeiProvider
+from .tettye import TettyeProvider
+from .nyirsegviz import NyirsegvizProvider
+from .opus_titasz import OpusTitaszProvider
+from .base import BaseProvider
+
+# Order matters: put more-specific providers before generic fallbacks.
+_PROVIDERS: list[BaseProvider] = [
+    ELMUProvider(),          # must come before EONDelProvider (both say "E.ON" in some text)
+    EONDelProvider(),
+    E2HungaryProvider(),
+    MVMEmaszProvider(),      # must come before MVMNextProvider (both contain "MVM" in text)
+    MVMNextProvider(),
+    DMRVProvider(),
+    EDVProvider(),
+    FovarosiVizmuvekProvider(),
+    HevesMegyeiProvider(),
+    TettyeProvider(),
+    NyirsegvizProvider(),
+    OpusTitaszProvider(),
+]
+
+
+def detect_provider(pages: list[str]) -> BaseProvider | None:
+    """Return the first provider whose detect() returns True, or None."""
+    for provider in _PROVIDERS:
+        if provider.detect(pages):
+            return provider
+    return None
