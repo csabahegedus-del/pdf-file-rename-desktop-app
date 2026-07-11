@@ -243,6 +243,10 @@ def _extract_annotations(path: Path) -> str:
 class PDFReader:
     """Read and normalise text from each page of a PDF."""
 
+    # No provider uses more than 3 pages; cap at 5 to handle edge cases while
+    # avoiding slow full-reads of large multi-page PDFs (e.g. Opus Titász).
+    MAX_PAGES = 5
+
     def __init__(self, path: Path):
         self.path = path
 
@@ -251,7 +255,7 @@ class PDFReader:
         pages: list[str] = []
         try:
             with pdfplumber.open(self.path) as pdf:
-                for i, page in enumerate(pdf.pages):
+                for page in pdf.pages[:self.MAX_PAGES]:
                     raw = page.extract_text() or ""
                     pages.append(normalise(raw))
         except Exception as exc:
