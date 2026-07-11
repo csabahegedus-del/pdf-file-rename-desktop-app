@@ -34,9 +34,9 @@ class MVMEmaszProvider(base.BaseProvider):
     def parse(self, pages: list[str]) -> dict:
         all_text = "\n".join(pages)
 
-        # Try XML-based extraction first (image-based PDFs with embedded XML)
-        invoice = self._invoice_from_xml(all_text) or self._invoice_emasz(all_text)
-        period_ym = self._period_ym_from_xml(all_text) or self._period_ym(all_text)
+        # Try structured-marker extraction first (image-based PDFs with embedded XML)
+        invoice = self._invoice_from_marker(all_text) or self._invoice_emasz(all_text)
+        period_ym = self._period_ym_from_marker(all_text) or self._period_ym(all_text)
 
         return {
             "invoice": invoice,
@@ -44,28 +44,21 @@ class MVMEmaszProvider(base.BaseProvider):
         }
 
     # ------------------------------------------------------------------
-    # XML-based helpers (image-based PDFs)
+    # Structured-marker helpers (injected by pdf_reader from XML attachment)
     # ------------------------------------------------------------------
 
-    def _invoice_from_xml(self, text: str) -> str | None:
-        """Extract invoice number from embedded XML (<sorszam> or szafaz attribute)."""
-        m = re.search(r"<sorszam>(\d+)</sorszam>", text)
-        if m:
-            return m.group(1)
-        m = re.search(r'szafaz="(\d+)"', text)
-        if m:
-            return m.group(1)
-        return None
+    def _invoice_from_marker(self, text: str) -> str | None:
+        """Extract invoice number from '[XML-sorszam] <value>' marker."""
+        m = re.search(r"^\[XML-sorszam\]\s*(\S+)", text, re.MULTILINE)
+        return m.group(1) if m else None
 
-    def _period_ym_from_xml(self, text: str) -> str | None:
+    def _period_ym_from_marker(self, text: str) -> str | None:
         """
-        Extract YYYY.MM from the first <tol> element in embedded XML.
-        E.g. <tol>2026.01.01-2026.01.31</tol>  →  '2026.01'
+        Extract YYYY.MM from '[XML-tol] YYYY.MM.DD-…' marker.
+        E.g. '[XML-tol] 2026.01.01-2026.01.31'  →  '2026.01'
         """
-        m = re.search(r"<tol>(\d{4})\.(\d{2})\.\d{2}", text)
-        if m:
-            return f"{m.group(1)}.{m.group(2)}"
-        return None
+        m = re.search(r"^\[XML-tol\]\s*(\d{4})\.(\d{2})\.\d{2}", text, re.MULTILINE)
+        return f"{m.group(1)}.{m.group(2)}" if m else None
 
     # ------------------------------------------------------------------
     # Text-based helpers (text-based PDF fallback)

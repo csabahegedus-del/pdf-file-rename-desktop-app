@@ -99,6 +99,59 @@ def normalise(text: str) -> str:
     return "\n".join(lines)
 
 
+def _detect_xml_encoding(xml_bytes: bytes) -> str:
+    """Read the encoding declared in an XML header; default to 'iso-8859-2'."""
+    header = xml_bytes[:200].decode("ascii", errors="ignore")
+    m = re.search(r'encoding=["\']([^"\']+)["\']', header, re.IGNORECASE)
+    return m.group(1) if m else "iso-8859-2"
+
+
+def _parse_xml_attachment(xml_bytes: bytes) -> list[str]:
+    """
+    Parse an XML invoice attachment and return structured text markers.
+
+    Uses xml.etree.ElementTree so the result is independent of whitespace,
+    attribute order, or other formatting details in the XML.  Returns an
+    empty list if parsing fails.
+    """
+    import xml.etree.ElementTree as ET
+
+    encoding = _detect_xml_encoding(xml_bytes)
+    try:
+        xml_text = xml_bytes.decode(encoding, errors="replace")
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as exc:
+        logger.debug("Could not parse XML attachment: %s", exc)
+        return []
+
+    lines: list[str] = []
+
+    # Vendor name ─ helps detection in case signature is absent
+    vendor = root.findtext(".//elado/nev") or ""
+    if vendor:
+        lines.append(f"[XML-elado] {vendor.strip()}")
+
+    # Invoice number (prefer <sorszam>, fall back to szafaz attribute)
+    sorszam = root.findtext(".//sorszam")
+    if not sorszam:
+        szamla = root.find("szamla")
+        sorszam = szamla.attrib.get("szafaz") if szamla is not None else None
+    if sorszam:
+        lines.append(f"[XML-sorszam] {sorszam.strip()}")
+
+    # Billing period: first <tol> element gives the start date
+    tol = root.findtext(".//tol")
+    if tol:
+        lines.append(f"[XML-tol] {tol.strip()}")
+
+    # Invoice type
+    tipus = root.findtext(".//szamlatipus")
+    if tipus:
+        lines.append(f"[XML-szamlatipus] {tipus.strip()}")
+
+    return lines
+
+
 def _extract_annotations(path: Path) -> str:
     """
     Extract digital-signature signer names and XML file-attachment content
@@ -107,7 +160,7 @@ def _extract_annotations(path: Path) -> str:
     MVM Émász invoices are image-based PDFs whose page text contains only the
     recipient address.  The provider name appears in the digital signature's
     /Name field and all structured invoice data (invoice number, period, …) is
-    stored in an ISO-8859-2 encoded XML file attached to the PDF.
+    stored in an XML file attached to the PDF.
 
     Returns a single string that is appended to the first page so that normal
     provider detect/parse methods can match on it.
@@ -179,8 +232,7 @@ def _extract_annotations(path: Path) -> str:
                             continue
                         stream = resolve1(f_ref)
                         xml_bytes = stream.get_data()
-                        xml_text = xml_bytes.decode("iso-8859-2", errors="replace")
-                        extra.append(f"[XML:{fname}]\n{xml_text}")
+                        extra.extend(_parse_xml_attachment(xml_bytes))
 
     except Exception as exc:
         logger.debug("Could not extract annotation data from %s: %s", path.name, exc)
